@@ -1,0 +1,23 @@
+{
+  "name": "hue_neeo_advanced_driver",
+  "version": "0.5.1",
+  "description": "Driver to control Hue from Neeo remote including colors and multiple lamps zones",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "neeo-sdk start"
+  },
+  "dependencies": {
+    "node-hue-api": "^4.0.6",
+    "neeo-sdk": "^0.53.8"
+  },
+  "keywords": [
+    "hue",
+    "neeo",
+    "remote",
+    "zone",
+    "colors"
+  ],
+  "author": "Jean-Arnaud COURCIER",
+  "license": "ISC"
+}

@@ -254,14 +254,17 @@ module.exports = function controller(theLightTable) {
     v3.discovery.nupnpSearch()
     .then(searchResults => {
       const host = searchResults[0].ipaddress;
-      v3.api.createLocal(host).connect(HueBridgeUser)
-      .then(api => {this.myAPI = api;
-        api.lights.getAll().then((LightsList) => {
-          LightsList.forEach(light => {
-            console.log(light._data.id + ' - ' + light._data.name)
-          });
-        }) 
-      })
+      if (HueBridgeUser != '') {
+        v3.api.createLocal(host).connect(HueBridgeUser)
+        .then(api => {this.myAPI = api;
+          api.lights.getAll().then((LightsList) => {
+            LightsList.forEach(light => {
+              console.log(light._data.id + ' - ' + light._data.name)
+            });
+          }) 
+        })
+      }
+      else {console.log('You need to use the setup button first on the remote.')}
     })
     .catch( (err) => {console.log('could not create the object ' + err)}) 
     

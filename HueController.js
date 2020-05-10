@@ -1,12 +1,11 @@
 
 'use strict';
+const settings = require('./settings');
 const v3 = require('node-hue-api').v3
   , discovery = v3.discovery
   , hueApi = v3.api 
 ;
-let HueBridgeUser = 'GQEAghijVJBuWsATvN2RPWT-piJPQh6zHmRyfotN';
-let HueBridgeKey = '8F384B3D853888D86383F25469DC2D10';
-let HueBridgeIP = '192.168.1.142';
+let HueBridgeUser = settings.philipshuebridgeuser;
 const neeoapi = require('neeo-sdk');
 const colorTable = {
   'Col_Red': 'Red',
@@ -24,22 +23,6 @@ const BrightMax = 254;
 const BrightMin = 1;
 const ZoneMax = 12;
 const ZoneMin = 0;
-
-/*
-var lightsTable = {
-  1 : 1, //dinning - 17
-  2 : 2, //entrance - 18
-  3 : 10, // Scale - 14
-  4 : 3, //living - 19
-  5 : 4, //wood - 20
-  6 : 5, //TV Right - 16
-  7 : 8, //TV Left - 12
-  candle : 15
-  rool : 13
-  kids : 11
-
-}
-*/
 
 function setHueData (TheAPI, TheLamp, vState, vBrightness, vColor) {
   console.log(TheLamp + " : " + vBrightness + " : " + vColor + " : " + vState);
@@ -258,9 +241,6 @@ function SetLightState (TargetAPI, Brightness, Color, State, Zone, LampList) {
 const appName = 'node-hue-api';
 const deviceName = 'Hue4Neeo';
 
-// Invoke the discovery and create user code
-//discoverAndCreateUser();
-
 module.exports = function controller(theLightTable) {
  
     this.lightsTable = theLightTable;
@@ -275,7 +255,13 @@ module.exports = function controller(theLightTable) {
     .then(searchResults => {
       const host = searchResults[0].ipaddress;
       v3.api.createLocal(host).connect(HueBridgeUser)
-      .then(api => {this.myAPI = api})
+      .then(api => {this.myAPI = api;
+        api.lights.getAll().then((LightsList) => {
+          LightsList.forEach(light => {
+            console.log(light._data.id + ' - ' + light._data.name)
+          });
+        }) 
+      })
     })
     .catch( (err) => {console.log('could not create the object ' + err)}) 
     
@@ -325,7 +311,7 @@ module.exports = function controller(theLightTable) {
     for (var key in colorTable) {
       self.colorList.addListItem({
         title:colorTable[key],label: 'Philips HUE Scene', 
-        thumbnailUri: encodeURI('http://192.168.1.11:3000/store/' + key + '.jpg'),
+        thumbnailUri: encodeURI(settings.imagesurl + key + '.jpg'),
         actionIdentifier: key, 
         /*uiAction: 'goBack'*/})
     }
@@ -372,5 +358,31 @@ module.exports = function controller(theLightTable) {
       .catch( (err) => {console.log(err)}); 
       SetLightState (self.myAPI, self.LightSlider, self.CurrentLightColor, true, self.CurrentZone, self.lightsTable);
     }
-   }
+    else if (name == "SETUP") {
+      console.log('Trying to detect Hue Bridge');
+      v3.discovery.nupnpSearch()
+      .then ((results) => {
+        console.log('Congratulations, your Bridge has been detected with success:')
+        console.log(JSON.stringify(results, null, 2));
+        console.log('Hang on, you still need to give access...');
+        return v3.api.createLocal(results[0].ipaddress).connect()
+      })
+      .then ((api) => {
+        return api.users.createUser('node-hue-api', 'Neeo');
+      })
+      .then ((user) => {
+        console.log('This is the philipshuebridgeuser value you are looking for:');
+        console.log(user.username)
+       })
+      .catch((err) => {
+        if (err._hueError != undefined) { 
+            if (err._hueError.payload.type == '101') {
+              console.log('Oups, you didn\'t press the Link button on your Philips Hue Bridge. You have to push the button and then you have 20 seconds to press the setup button on the remote');
+            }
+        }
+        else {console.log(err);}
+      })
+      //link button not pressed
+    }
   }
+}

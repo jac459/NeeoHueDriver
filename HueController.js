@@ -1,11 +1,7 @@
 
 'use strict';
 const settings = require('./settings');
-const v3 = require('node-hue-api').v3
-  , discovery = v3.discovery
-  , hueApi = v3.api 
-;
-let HueBridgeUser = settings.philipshuebridgeuser;
+
 const neeoapi = require('neeo-sdk');
 const colorTable = {
   'Col_Red': 'Red',
@@ -21,8 +17,6 @@ const colorTable = {
 }
 const BrightMax = 254;
 const BrightMin = 1;
-const ZoneMax = 12;
-const ZoneMin = 0;
 
 function setHueData (TheAPI, TheLamp, vState, vBrightness, vColor) {
   console.log(TheLamp + " : " + vBrightness + " : " + vColor + " : " + vState);
@@ -188,7 +182,7 @@ function setHueData (TheAPI, TheLamp, vState, vBrightness, vColor) {
 function SetLightState (TargetAPI, Brightness, Color, State, Zone, LampList) {
   let relativeBrightness;
   console.log('zone: ' + Zone+ ' Bri : ' + Brightness+ ' col: ' + Color + 'list : ' + LampList);
-  if (Zone) {
+  if (Zone>0) {
     if (State) {
       if (Number(Zone) <= (Number(LampList.length) - 1)) {
         for (var key in LampList) {
@@ -237,36 +231,15 @@ function SetLightState (TargetAPI, Brightness, Color, State, Zone, LampList) {
 }
 
 
-
-const appName = 'node-hue-api';
-const deviceName = 'Hue4Neeo';
-
-module.exports = function controller(theLightTable) {
- 
+module.exports = function controller(HueAPI, theLightTable) {
     this.lightsTable = theLightTable;
     this.CurrentLightColor = 'Col_Warm_White';
-    this.CurrentZone;
+    this.CurrentZone = Math.floor(theLightTable.length-1);
     this.colorList;
-    this.myAPI;
-    this.LightSlider = 254;
+    this.myAPI = HueAPI;
+    this.LightSlider;
     this.sendComponentUpdate;
     var self = this;
-    v3.discovery.nupnpSearch()
-    .then(searchResults => {
-      const host = searchResults[0].ipaddress;
-      if (HueBridgeUser != '') {
-        v3.api.createLocal(host).connect(HueBridgeUser)
-        .then(api => {this.myAPI = api;
-          api.lights.getAll().then((LightsList) => {
-            LightsList.forEach(light => {
-              console.log(light._data.id + ' - ' + light._data.name)
-            });
-          }) 
-        })
-      }
-      else {console.log('You need to use the setup button first on the remote.')}
-    })
-    .catch( (err) => {console.log('could not create the object ' + err)}) 
     
   this.browse = {
 
@@ -275,17 +248,18 @@ module.exports = function controller(theLightTable) {
       action: (deviceId, params) => this.handleSceneAction(deviceId, params),
 
     };      
-    
   this.registerStateUpdateCallback = function(updateFunction) {
-    console.log('[CONTROLLER] register update state for Hue');
-    self.sendComponentUpdate = updateFunction;
+     self.sendComponentUpdate = updateFunction;
   };
+
+  
 
   this.zoneSet = function(deviceId, value) {
     self.CurrentZone = value;
     console.log(self.CurrentZone);
-    self.sendComponentUpdate({uniqueDeviceId: deviceId,component: 'Zone',value: self.CurrentZone})
-      .catch( (err) => {}); 
+    //self.sendComponentUpdate({uniqueDeviceId: deviceId,component: 'Zone',value: self.CurrentZone})
+    //  .then(function() {console.log('success')})
+    //  .catch( (err) => {console.log(err)}); 
     SetLightState (self.myAPI, self.LightSlider, self.CurrentLightColor, true, self.CurrentZone, self.lightsTable);
     }
   this.zoneGet= function () {
@@ -294,7 +268,10 @@ module.exports = function controller(theLightTable) {
 
   this.brightnessSet = function(deviceId, value) {
     self.LightSlider = value;
-    self.sendComponentUpdate({uniqueDeviceId: deviceId,component: 'Brightness',value: self.LightSlider}).catch(function (err) {});
+    console.log('Brightness value : ' + self.LightSlider);
+    //self.sendComponentUpdate({uniqueDeviceId: deviceId,component: 'Brightness',value: self.LightSlider})
+    //.then(function() {console.log('success')})
+    //.catch(function (err) {console.log(err)});
     SetLightState (self.myAPI, value, self.CurrentLightColor, true, self.CurrentZone, self.lightsTable);
   };
 
@@ -330,12 +307,13 @@ module.exports = function controller(theLightTable) {
   };
 
   this.onButtonPressed = function(name, deviceId) {
-    console.log(`[CONTROLLER] ${name} button pressed for device ${deviceId}`);
+    console.log('[CONTROLLER]' + name + ' button pressed for device ' + deviceId);
     if (name == "POWER ON") {
      SetLightState (self.myAPI, self.LightSlider, self.CurrentLightColor, true, self.CurrentZone, self.lightsTable);
     }
     else if (name == "POWER OFF") {
-      SetLightState (self.myAPI, self.LightSlider, self.CurrentLightColor, false, self.CurrentZone, self.lightsTable);
+      SetLightState (self.myAPI, self.
+        LightSlider, self.CurrentLightColor, false, self.CurrentZone, self.lightsTable);
    }
     else if (name == "CURSOR RIGHT") {
       self.LightSlider = Number(self.LightSlider) + 20; if (self.LightSlider > BrightMax) {self.LightSlider = BrightMax};
@@ -350,42 +328,19 @@ module.exports = function controller(theLightTable) {
       SetLightState (self.myAPI, self.LightSlider, self.CurrentLightColor, true, self.CurrentZone, self.lightsTable);
    }
     else if (name == "CURSOR UP") {
-      self.CurrentZone = Number(self.CurrentZone) + 0.25; if (self.CurrentZone > ZoneMax) {self.CurrentZone = ZoneMax};
+      self.CurrentZone = Number(self.CurrentZone) + 0.25; if (self.CurrentZone > ((theLightTable.length-1)*2)) {self.CurrentZone = ((theLightTable.length-1)*2)};
       self.sendComponentUpdate({uniqueDeviceId: deviceId,component: 'Zone',value: self.CurrentZone})
       .catch( (err) => {console.log(err)});
       SetLightState (self.myAPI, self.LightSlider, self.CurrentLightColor, true, self.CurrentZone, self.lightsTable);
-   }
+    }
     else if (name == "CURSOR DOWN") {
-      self.CurrentZone = Number(self.CurrentZone) - 0.25; if (self.CurrentZone < ZoneMin) {self.CurrentZone = ZoneMin};
+      self.CurrentZone = Number(self.CurrentZone) - 0.25; if (self.CurrentZone < 0) {self.CurrentZone = 0};
       self.sendComponentUpdate({uniqueDeviceId: deviceId,component: 'Zone',value: self.CurrentZone})
       .catch( (err) => {console.log(err)}); 
       SetLightState (self.myAPI, self.LightSlider, self.CurrentLightColor, true, self.CurrentZone, self.lightsTable);
     }
     else if (name == "SETUP") {
-      console.log('Trying to detect Hue Bridge');
-      v3.discovery.nupnpSearch()
-      .then ((results) => {
-        console.log('Congratulations, your Bridge has been detected with success:')
-        console.log(JSON.stringify(results, null, 2));
-        console.log('Hang on, you still need to give access...');
-        return v3.api.createLocal(results[0].ipaddress).connect()
-      })
-      .then ((api) => {
-        return api.users.createUser('node-hue-api', 'Neeo');
-      })
-      .then ((user) => {
-        console.log('This is the philipshuebridgeuser value you are looking for:');
-        console.log(user.username)
-       })
-      .catch((err) => {
-        if (err._hueError != undefined) { 
-            if (err._hueError.payload.type == '101') {
-              console.log('Oups, you didn\'t press the Link button on your Philips Hue Bridge. You have to push the button and then you have 20 seconds to press the setup button on the remote');
-            }
-        }
-        else {console.log(err);}
-      })
-      //link button not pressed
+      
     }
   }
 }

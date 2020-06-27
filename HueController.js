@@ -257,9 +257,9 @@ module.exports = function controller(HueAPI, theLightTable) {
   this.zoneSet = function(deviceId, value) {
     self.CurrentZone = value;
     console.log(self.CurrentZone);
-    //self.sendComponentUpdate({uniqueDeviceId: deviceId,component: 'Zone',value: self.CurrentZone})
-    //  .then(function() {console.log('success')})
-    //  .catch( (err) => {console.log(err)}); 
+    self.sendComponentUpdate({uniqueDeviceId: deviceId,component: 'Zone',value: self.CurrentZone})
+      .then(function() {console.log('success')})
+      .catch( (err) => {console.log(err)}); 
     SetLightState (self.myAPI, self.LightSlider, self.CurrentLightColor, true, self.CurrentZone, self.lightsTable);
     }
   this.zoneGet= function () {
@@ -269,9 +269,9 @@ module.exports = function controller(HueAPI, theLightTable) {
   this.brightnessSet = function(deviceId, value) {
     self.LightSlider = value;
     console.log('Brightness value : ' + self.LightSlider);
-    //self.sendComponentUpdate({uniqueDeviceId: deviceId,component: 'Brightness',value: self.LightSlider})
-    //.then(function() {console.log('success')})
-    //.catch(function (err) {console.log(err)});
+    self.sendComponentUpdate({uniqueDeviceId: deviceId,component: 'Brightness',value: self.LightSlider})
+    .then(function() {console.log('success')})
+    .catch(function (err) {console.log(err)});
     SetLightState (self.myAPI, value, self.CurrentLightColor, true, self.CurrentZone, self.lightsTable);
   };
 

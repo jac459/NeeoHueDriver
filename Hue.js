@@ -177,6 +177,15 @@ function discoverBrain() {
         console.log('- Brain discovered:', brain.name);
         console.log('at IP: ' + brain.iparray)
         brainIp = brain.iparray.toString();
+        fileData.brainip = brainIp;
+        fileData.brainport = brainPort;
+        fs.writeFile('./config.js', JSON.stringify(fileData), err => {
+          if (err) {
+              console.log('Error writing file', err);
+          } else {
+              console.log('Config saved.');
+          }
+        })
         resolve();
       })
       .catch ((err) => {
@@ -219,22 +228,21 @@ function runNeeo () {
     console.log('Trying to start the Driver')
     neeoapi.startServer(neeoSettings)
       .then(() => {
-          fileData.brainip = brainIp;
-          fileData.brainport = brainPort;
-          fs.writeFile('./config.js', JSON.stringify(fileData), err => {
-            if (err) {
-                console.log('Error writing file', err);
-            } else {
-                console.log('Driver running, you can search it on the remote control.');
-            }
-            resolve();
-          })
+          console.log('Driver started, serach for Jac Hue')
        
       })
       .catch(err => {
           console.log('Failed running Neeo with error: ' + err);
           brainPort = Number(brainPort)+1;
           console.log('trying to increment port:', brainPort);
+          fileData.brainport = brainPort;
+          fs.writeFile('./config.js', JSON.stringify(fileData), err => {
+            if (err) {
+                console.log('Error writing file', err);
+            } else {
+                console.log('Config saved.');
+            }
+          })
           runNeeo();
       });
     })

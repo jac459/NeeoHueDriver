@@ -1,5 +1,5 @@
 'use strict';
-const settings = require('./settings');
+const settings = require(__dirname + '/settings');
 const neeoapi = require('neeo-sdk');
 const readline = require('readline');
 const fs = require('fs');
@@ -13,7 +13,7 @@ var lineReader = readline.createInterface({
   output: process.stdout
 });
 
-const controller = require('./HueController');
+const controller = require(__dirname + '/HueController');
 const { stringify } = require('querystring');
 const { connect } = require('http2');
 //const { rawListeners } = require('process'); // Is this still usefull 
@@ -28,7 +28,7 @@ const v3 = require('node-hue-api').v3
 
 function readConfig() {
   return new Promise(function (resolve, reject) {
-    fs.readFile('./config.js', (err, data) => {
+    fs.readFile(__dirname + '/config.js', (err, data) => {
       
       if (err) {console.log('No config file, the initial setup will be launched');}
       else { fileData = JSON.parse(data); }
@@ -57,7 +57,7 @@ function InitiateHue () {
           .then ((user) => {
             console.log('The user has been found successfully, let\'s save it.');
             fileData = user;
-            fs.writeFile('./config.js', JSON.stringify(user), err => {
+            fs.writeFile(__dirname + '/config.js', JSON.stringify(user), err => {
               clearInterval(setupInterval);
               if (err) {
                   console.log('Error writing file', err);
@@ -179,7 +179,7 @@ function discoverBrain() {
         brainIp = brain.iparray.toString();
         fileData.brainip = brainIp;
         fileData.brainport = brainPort;
-        fs.writeFile('./config.js', JSON.stringify(fileData), err => {
+        fs.writeFile(__dirname + '/config.js', JSON.stringify(fileData), err => {
           if (err) {
               console.log('Error writing file', err);
           } else {
@@ -236,7 +236,7 @@ function runNeeo () {
           brainPort = Number(brainPort)+1;
           console.log('trying to increment port:', brainPort);
           fileData.brainport = brainPort;
-          fs.writeFile('./config.js', JSON.stringify(fileData), err => {
+          fs.writeFile(__dirname + '/config.js', JSON.stringify(fileData), err => {
             if (err) {
                 console.log('Error writing file', err);
             } else {

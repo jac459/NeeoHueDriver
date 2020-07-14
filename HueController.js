@@ -1,6 +1,6 @@
 
 'use strict';
-const settings = require('./settings');
+const settings = require(__dirname + '/settings');
 
 const neeoapi = require('neeo-sdk');
 const colorTable = {
@@ -235,10 +235,10 @@ module.exports = function controller(HueAPI, theLightTable) {
     this.lightsTable = theLightTable;
     this.CurrentLightColor = 'Col_Warm_White';
     this.CurrentZone = Math.floor(theLightTable.length-1);
+    this.LightSlider = 254;
     this.colorList;
     this.myAPI = HueAPI;
-    this.LightSlider;
-    this.sendComponentUpdate;
+     this.sendComponentUpdate;
     var self = this;
     
   this.browse = {

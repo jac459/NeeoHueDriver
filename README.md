@@ -1,3 +1,5 @@
+# DEPRECATED - THIS DRIVER IS NOW INCLUDED INSIDE THE META. USE ONLY IF YOU WANT TO USE THE ZONING FEATURE.
+
 # Hue Driver for Neeo
 
 This driver allows advanced interactions with Philips Hue (colors, multi-rooms, zones) and NEEO Remote (legacy). If you don't have the remote, you don't want this driver.
